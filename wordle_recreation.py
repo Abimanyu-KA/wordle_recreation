@@ -1,0 +1,591 @@
+from random import *
+from tkinter import *
+from tempfile import NamedTemporaryFile
+import shutil
+import tkinter.messagebox as msg
+import csv
+
+
+official_file = open("OfficialWordles(2315)CSV.txt","r")
+all_file = open("5-letter(12972)CSVwords.txt","r")
+
+o_read = official_file.read()
+a_read = all_file.read()
+
+o_list = o_read.split(',')
+a_list = a_read.split(',')
+
+root = Tk()
+root.configure(bg="black")
+root.option_add('*Font', ('Bahnschrift', 11))
+
+current_data = []
+guess_dist = []
+c1=0
+
+def menu():
+    root.title("Menu")
+    root.geometry("200x125")
+
+    login_button.pack(pady=2)
+    signup_button.pack(pady=2)
+    guest_button.pack(pady=2)
+
+def user_panel():
+    global c1
+    root.title("User Panel")
+    root.geometry("200x125")
+
+    c1=0
+    play_button.pack(pady=2)
+    stats_button.pack(pady=2)
+    leaderboard_button.pack(pady=2)
+
+
+def login_pgm():
+    global current_data, guess_dist
+    root.title("Login")
+    root.geometry("350x150")
+
+    login_button.pack_forget()
+    signup_button.pack_forget()
+    guest_button.pack_forget()
+
+    f1 = open("UserDatabase.csv","r")
+    r1 = csv.reader(f1)
+
+    userid_entry = Entry(root, width=20, bg="#383838", fg="#E8E8E8", relief="flat")
+    pswd_entry = Entry(root, width=20, bg="#383838",fg="#E8E8E8", show='*', relief="flat")
+    loguser_label = Label(root, text="Enter username", bg="black", fg="#77F66E")
+    logpswd_label = Label(root, text="Enter password", bg="black", fg="#77F66E")
+
+    def toggle3_pswd():        
+        if toggle3.cget("text") == "Show":            
+            toggle3.configure(text="Hide", bg="#00A502")
+            pswd_entry.configure(show="")            
+
+        elif toggle3.cget("text") == "Hide":            
+            toggle3.configure(text="Show", bg="#E24444")
+            pswd_entry.configure(show="*")
+
+    toggle3 = Button(root, text="Show", width=4, bg="#E24444", relief='flat', command=toggle3_pswd)
+
+    def check_cred():
+        global current_data, guess_dist
+        nonlocal f1, r1
+
+        f1.seek(0)
+        for i1 in r1:
+            if i1[0] == userid_entry.get():
+                if i1[1] == pswd_entry.get():
+                    current_data = i1
+                    guess_dist = current_data[7].strip("][").split(",")
+                    for i4 in range(0,len(guess_dist)):
+                        guess_dist[i4] = int(guess_dist[i4])
+                    return True
+                    break
+
+                else:
+                    return False
+                    break
+        else:
+            return False
+
+    def auth():
+        if check_cred() is True:
+            clear_login(user_panel)
+        elif check_cred() is False:
+            f_cred_res = msg.askretrycancel("Wrong Credentials","Invalid username or password.\nTry again?")
+
+            if f_cred_res is True:
+                userid_entry.delete(0,END)
+                pswd_entry.delete(0,END)
+                userid_entry.focus_set()
+
+            elif f_cred_res is False:
+                clear_login(menu)    
+
+    auth_button = Button(root, text="Login", width=7, bg="#5082EC", fg="black", relief="flat", command=auth)
+
+    loguser_label.grid(row=0, column=0, padx=4, pady=10)
+    logpswd_label.grid(row=1, column=0, padx=4, pady=10)
+    userid_entry.grid(row=0, column=1, padx=4, pady=10)
+    pswd_entry.grid(row=1, column=1, padx=4, pady=10)
+    auth_button.grid(row=2, column=1, padx=4, pady=10)
+    toggle3.grid(row=1, column=3, padx=4, pady=10)
+
+    def clear_login(p):
+        for w1 in widgets_login:
+            w1.grid_forget()
+        f1.close()
+        p()
+
+    back_button = Button(root, text="Back", width=4, bg="#E34522", relief='flat', command=lambda: clear_login(menu))
+    back_button.grid(row=2, column=0, padx=4, pady=10)
+
+    widgets_login = [loguser_label, logpswd_label, userid_entry, pswd_entry, auth_button, toggle3, back_button]
+
+
+def signup_pgm():
+    root.title("Sign up")
+    root.geometry("370x205")
+
+    login_button.pack_forget()
+    signup_button.pack_forget()
+    guest_button.pack_forget()
+
+    user_label = Label(root, text="Enter username", bg="black", fg="#77F66E")
+    pswd_label = Label(root, text="Enter password", bg="black", fg="#77F66E")
+    cnfrm_label = Label(root, text="Confirm password", bg="black", fg="#77F66E")
+    user_label.grid(row=0, column=0, padx=4, pady=10)
+    pswd_label.grid(row=1, column=0, padx=4, pady=10)
+    cnfrm_label.grid(row=2, column=0, padx=4, pady=10)
+
+    new_user = Entry(root, width=20, bg="#383838", fg="#E8E8E8", relief="flat")
+    new_pswd = Entry(root, width=20, bg="#383838",fg="#E8E8E8", show='*', relief="flat")
+    cnfrm_pswd = Entry(root, width=20, bg="#383838", fg="#E8E8E8", show='*', relief="flat")
+    new_user.grid(row=0, column=1, padx=4, pady=10)
+    new_pswd.grid(row=1, column=1, padx=4, pady=10)
+    cnfrm_pswd.grid(row=2, column=1, padx=4, pady=10)
+
+    def toggle_pswd(toggle, pswd):        
+        if toggle.cget("text") == "Show":            
+            toggle.configure(text="Hide", bg="#00A502")
+            pswd.configure(show="")            
+
+        elif toggle.cget("text") == "Hide":            
+            toggle.configure(text="Show", bg="#E24444")
+            pswd.configure(show="*")
+
+    toggle1 = Button(root, text="Show", width=4, bg="#E24444", relief='flat')
+    toggle2 = Button(root, text="Show", width=4, bg="#E24444", relief='flat')
+    toggle1.configure(command=lambda: toggle_pswd(toggle1, new_pswd))
+    toggle2.configure(command=lambda: toggle_pswd(toggle2, cnfrm_pswd))
+    toggle1.grid(row=1, column=2, padx=4, pady=10)
+    toggle2.grid(row=2, column=2, padx=4, pady=10)
+
+    def clear_signup():
+        for w2 in widgets_signup:
+            w2.grid_forget()
+        menu()
+
+    def create_user():
+        f2 = open("UserDatabase.csv","r+", newline="")
+        r2 = csv.reader(f2)
+        
+        if len(new_user.get())>=6 and len(new_user.get())<=30:
+            if len(new_pswd.get())>=8 and len(new_pswd.get())<=64:
+                if new_pswd.get() == cnfrm_pswd.get():
+                    for i2 in r2:
+                        if new_user.get() == i2[0]:
+                            msg.showerror("Error","Username already in use.")
+                            break
+
+                        elif new_pswd.get() == i2[1]:
+                            msg.showerror("Error","Password denied")
+                            break
+                    else:
+                        w2 = csv.writer(f2)
+                        w2.writerow([new_user.get(), new_pswd.get(), 0, 0, 0, 0, 0, [0,0,0,0,0,0]])
+                        f2.close()
+                        msg.showinfo("Successful","A new account has been created.\nLogin with the account to save scores.")
+                        clear_signup()
+                else:
+                    msg.showerror("Error","Passwords do not match.")
+            else:
+                msg.showerror("Password out of range!","The password is either too short or too long.\n" +
+                    "Minimum characters: 8\nMaximum characters: 64")
+        else:
+            msg.showerror("Username out of range!","The username is either too short or too long.\n" +
+                "Minimum characters: 6\nMaximum characters: 30")
+
+    cnfrm_signup = Button(root, text="Sign up", width=7, bg="#5082EC", fg="black", relief="flat", command=create_user)
+    cnfrm_signup.grid(row=3, column=1, padx=4, pady=10)
+    back_button = Button(root, text="Back", width=4, bg="#E34522", relief='flat', command=clear_signup)
+    back_button.grid(row=3, column=0, padx=4, pady=10)
+
+    widgets_signup = [user_label, pswd_label, cnfrm_label, new_user, new_pswd, cnfrm_pswd, toggle1, toggle2,
+     cnfrm_signup, back_button]
+
+
+def guest_pgm():
+    login_button.pack_forget()
+    signup_button.pack_forget()
+    guest_button.pack_forget()
+
+    wordle_pgm()
+
+def stats_pgm():
+    global current_data, guess_dist
+
+    root.title("Statistics")
+    root.geometry("325x390")
+
+    guess_dist_labels = []
+    guess_dist_bars = []
+    play_button.pack_forget()
+    stats_button.pack_forget()
+    leaderboard_button.pack_forget()
+
+    stat_labels = ['played_statlabel', 'wins_statlabel', 'winrate_statlabel', 'cstreak_statlabel', 'mstreak_statlabel']
+    stat_display = ['played_stat', 'wins_stat', 'winrate_stat', 'cstreak_stat', 'mstreak_stat']
+    text_stat = ["Played", "Wins", "Win rate", "Current streak", "Maximum streak"]
+    for i9 in range(0,5):
+        stat_labels[i9] = Label(root, text=text_stat[i9], bg="black", font=("Bahnschrift semicondensed",11), fg="#FCF3CF")
+        stat_display[i9] = Label(root, text=current_data[i9+2], bg="black", font=("Bahnschrift semibold",11), fg="#FEF9E7")
+        stat_labels[i9].grid(row=i9, column=0, padx=0, pady=0)
+        stat_display[i9].grid(row=i9, column=1, padx=0, pady=0, sticky="W")    
+    
+    guess_dist_stats = Label(root, text="Guess Distribution", bg="black", font=("Bahnschrift semibold",12), fg="#F9E79F")
+    guess_dist_stats.grid(row=5, column=0, padx=4, pady=10)
+
+    for i6 in range(0,6):
+        if guess_dist[i6] == 0:
+            bar_bg = "#626567"
+            bar_fg = "#E8E8E8"
+
+        else:
+            bar_bg = "#00AE15"
+            bar_fg = "black"
+
+        dist_label = Label(root, text=i6+1, bg="black", font=("Bahnschrift condensed",11), fg="#E8E8E8")
+        dist_label.grid(row=i6+6, column=0, ipadx=4, padx=0, pady=0, sticky="E")
+        guess_dist_labels.append(dist_label)
+
+        if max(guess_dist) == 0:
+            bar_width = 0
+        else:
+            bar_width = int(25/max(guess_dist))*guess_dist[i6]
+
+        dist_bar = Label(root,text=guess_dist[i6], width=bar_width, bg=bar_bg, font=("Bahnschrift semibold condensed", 11),
+         fg=bar_fg, anchor="e", relief="flat")
+        dist_bar.grid(row=i6+6, column=1, padx=0, pady=2, sticky="W")
+        guess_dist_bars.append(dist_bar)
+
+    def back_statistics():
+
+        for w3 in widgets_stats:
+            w3.grid_forget()
+        user_panel()
+
+    back_stat = Button(root, text="Back", bg="#E74C3C", relief="flat", command=back_statistics)
+    back_stat.grid(row=15, column=0, padx=4, pady=10, sticky='W')
+
+    empty_stat = Label(root, text=current_data[2], bg="black", fg="black", font="56")
+    empty_stat.grid(row=5, column=1, padx=4, pady=10)
+
+    widgets_stats = [back_stat, empty_stat, guess_dist_stats]
+    widgets_stats.extend(guess_dist_bars)
+    widgets_stats.extend(guess_dist_labels)
+    widgets_stats.extend(stat_labels)
+    widgets_stats.extend(stat_display)
+
+def leaderboard_pgm():
+    global current_data
+
+    root.title("Leaderboard")
+    root.geometry("490x205")
+
+    play_button.pack_forget()
+    stats_button.pack_forget()
+    leaderboard_button.pack_forget()
+
+    f4 = open('UserDatabase.csv','r')
+    r4 = csv.reader(f4)
+    all_data = []
+    for i5 in r4:
+        all_data.append(i5)
+
+    wins_leaderboard = sorted(all_data, key=lambda u: (-int(u[3]), -float(u[4]), -int(u[6]), -int(u[5])))
+    winrate_leaderboard = sorted(all_data, key=lambda v: (-float(v[4]), -int(v[3]), -int(v[6]), -int(v[5])))
+    streak_leaderboard = sorted(all_data, key=lambda w: (-int(w[6]), -float(w[4]), -int(w[3]), -int(w[5])))
+    leaderboards = [wins_leaderboard, winrate_leaderboard, streak_leaderboard]
+    categories = [3, 4, 6]
+    leaderboard_labels=[]
+    user_lead = []
+    win_label = Label(root, text="Most Wins", font=('Bahnschrift SemiBold',14), bg='black', fg='#AF7AC5')
+    winrate_label = Label(root, text="Highest Win Rate", font=('Bahnschrift SemiBold',14), bg='black', fg='#58D68D')
+    streak_label = Label(root, text="Longest Streak", font=('Bahnschrift SemiBold',14), bg='black', fg='#F5B041')
+
+    win_label.grid(row=0, column=0, padx=4, pady=10)
+    winrate_label.grid(row=0, column=1, padx=4, pady=4)
+    streak_label.grid(row=0, column=2, padx=4, pady=4)
+    fg_lead = [['#F5EEF8','#EBDEF0', '#D7BDE2', '#C39BD3'], ['#EAFAF1', '#D5F5E3', '#ABEBC6',
+    '#82E0AA'], ['#FEF5E7', '#FDEBD0', '#FAD7A0', '#F8C471']]
+
+    for x1 in range(0,3):
+        for y1 in range(1,4):
+            lead_text = str(y1) + ". " + leaderboards[x1][y1-1][0] + " - " + leaderboards[x1][y1-1][categories[x1]]
+            lead_label = Label(root, text=lead_text, font=('Bahnschrift SemiLight',11), bg='black', fg=fg_lead[x1][y1-1])
+            lead_label.grid(row=y1, column=x1, padx=16, pady=0)
+            leaderboard_labels.append(lead_label)
+            #print(lead_text)
+
+        else:            
+            leaders_list = []
+            for i7 in leaderboard_labels[x1*3:x1*3+3]:
+                leaders_list.append(i7.cget('text').split()[1])
+            if current_data[0] not in leaders_list:
+                lead_text = str(leaderboards[x1].index(current_data) + 1) + ". " + current_data[0] + " - " + current_data[categories[x1]]
+                lead_label = Label(root, text=lead_text, font=('Bahnschrift SemiLight',11), bg='black', fg=fg_lead[x1][3])
+                lead_label.grid(row=4, column=x1, padx=16, pady=0)
+                user_lead.append(lead_label)
+    
+    def clear_leaderboard():
+        for i8 in widgets_leaderboard:
+            i8.grid_forget()
+        user_panel()
+
+    back_leaderboard = Button(root, text="Back", width=4, bg="#E34522", relief='flat', command=clear_leaderboard)
+    back_leaderboard.grid(row=7, column=1, padx=16, pady=16)
+
+    widgets_leaderboard = [win_label, winrate_label, streak_label, back_leaderboard]
+    widgets_leaderboard.extend(leaderboard_labels)
+    widgets_leaderboard.extend(user_lead)
+
+
+def wordle_pgm():
+    global e_list,a_list,c5, forget_packs, c1, current_data, guess_dist
+
+    root.title("Wordle")
+    root.geometry("247x215")
+
+    word = choice(o_list)
+    print(word)
+    entries = [] 
+    u = 0
+    v = 5
+
+    if c1 == 0:
+        play_button.pack_forget()
+        stats_button.pack_forget()
+        leaderboard_button.pack_forget()
+        c1 = 1
+
+    def start_pgm():
+        nonlocal u,v,entries
+
+        steps.configure(text="Enter a word")
+        start.grid_forget()
+        check.grid(row=2, column=5)
+        if u<30:
+            entries[u].focus_set()
+
+        for i in range(u,v):
+            entries[i].configure(state="normal")
+
+    def guessing_pgm():
+        global a_list
+        nonlocal word,u,v,entries
+
+        user_entry = ""
+        c4 = 0
+        for j in entries[u:v]:
+            user_entry = user_entry + j.get()
+        user_entry = user_entry.lower()
+
+        if user_entry != "":
+            if user_entry in a_list:                
+                if user_entry == word:
+                    for n in range(u,v):
+                        entries[n].configure(state="readonly", readonlybackground="#00A502", fg="black")
+                    msg.showinfo("Congratulations!!!", "You got the word![" + word + "]")
+                    steps.configure(text="Retry or Exit")
+                    try:
+                        update_file("Win")
+                    except:
+                        pass
+
+                    c4 = 1
+                    over_pgm()
+
+                else:
+                    word_list = list(word)
+                    entries_text = []
+                    entries_list = []
+                    new_entries_text = []
+                    new_entries_list = []
+                    new_word_list = []
+                    for k in range(u,v):
+                        entries_text.append(entries[k].get().lower())
+                        entries_list.append(entries[k])
+
+                    for i10 in range(0,5):
+                        if entries_text[i10] == word_list[i10]:
+                            entries_list[i10].configure(state="readonly", readonlybackground="#00A502",fg="black")
+                            
+                        else:
+                            new_entries_text.append(entries_text[i10])
+                            new_entries_list.append(entries_list[i10])
+                            new_word_list.append(word_list[i10])
+
+                    else:
+                        for i11 in range(len(new_entries_list)):
+                            if new_entries_text[i11] in new_word_list:
+                                new_entries_list[i11].configure(state="readonly", readonlybackground="#FFC300", fg="black")
+                                new_word_list.remove(new_entries_text[i11])
+                            else:
+                                new_entries_list[i11].configure(state="readonly", readonlybackground="#5B5B5B", fg="black")
+
+                    if v == 30:
+                        c4 = 1
+                        msg.showinfo("Game Over", "The word was '" + word + "'")
+                        try:
+                            update_file("Lose")
+                        except:
+                            pass
+                        finally:
+                            over_pgm()
+                    u += 5
+                    v += 5
+                    if c4 == 0:
+                        start_pgm()
+
+            else:
+                msg.showerror("Word not found!","Kindly enter meaningful words")
+                entries[u].focus_set()
+                for l in range(u,v):
+                        entries[l].delete(0,None)
+        else:
+            msg.showerror("Error","Enter a word before checking.")
+
+    def update_file(result):
+        global current_data, guess_dist
+        nonlocal u
+
+        tempfile = NamedTemporaryFile('w+', newline='', delete=False)
+
+        with open('UserDatabase.csv', 'r', newline='') as f3, tempfile:
+            r3 = csv.reader(f3)
+            w3 = csv.writer(tempfile)
+            for i3 in r3:
+                if current_data[0] == i3[0] and current_data[1] == i3[1]:
+                    played = int(current_data[2]) + 1
+                    if result == "Win":
+                        wins = int(current_data[3]) + 1
+                        current_streak = int(current_data[5]) + 1
+                    else:
+                        wins = int(current_data[3])
+                        current_streak = 0
+
+                    if current_streak > int(current_data[6]):
+                        max_streak = current_streak
+                    else:
+                        max_streak = int(current_data[6])
+                    guess_no = (u//5)
+
+                    try:
+                        guess_dist = current_data[7].strip("][").split(",")
+                        for i4 in range(0,len(guess_dist)):
+                            guess_dist[i4] = int(guess_dist[i4])
+                    except:
+                        guess_dist = current_data[7]
+
+                    if result == "Win":
+                        guess_dist[guess_no] += 1
+
+                    win_percent = round((wins/played)*100, 2)
+
+                    current_data = [current_data[0], current_data[1], str(played), str(wins),
+                     str(win_percent), str(current_streak), str(max_streak), str(guess_dist)]
+
+                    w3.writerow(current_data)
+
+                else:
+                    w3.writerow(i3)
+
+        shutil.move(tempfile.name, 'UserDatabase.csv')
+
+    def next_entry(self):
+        nonlocal entries,u,v        
+        for c5 in range(u,v):
+            if entries[c5].get() != "":
+                if c5 >= 29:
+                    pass
+                else:
+                    entries[c5+1].focus_set()
+
+    def clear_entry():
+        nonlocal entries,u,v
+        for l in range(u,v):
+                    entries[l].delete(0,None)
+        entries[u].focus_set()
+
+    root.bind('<Key>', next_entry)
+    
+    def info_pgm():
+        msg.showinfo("Information","How to Play:\n \n   ->Guess the 5-letter word in 6 tries" +
+         "\n \n   ->In each try, enter a meaningful 5-letter word\n \n   ->From the word entered:" +
+         "\n      ~if the letter is present in the unknown word,\n         the box will turn yellow" + 
+         "\n      ~if the letter is in the right position,\n         the box will turn green" + 
+         "\n      ~if the letter is not in the word, the box will be grey\n \n   ->Guess the word," + 
+         " using the hints, within 6 tries to win\n \n   If a letter is entered more than once, " + 
+         " and that letter is present in the word but lesser number of times than in the entry," +
+         " then only appropriate number of boxes will be colored and the rest will remain grey even though its in the word." +
+         "\n \n \nInstructions:\n   ->To start playing - click on 'Start'" + 
+         "\n   ->To check your answer - click on 'Check'\n   ->To clear your entry - click on 'Clear'" + 
+         "\n   ->To reset the game - click on 'Reset'\n   ->To exit to menu - click on 'Exit'" + 
+         "\n \n \n        Thank you for playing!!!")
+
+    def over_pgm():
+        msg.showinfo("Over","Reset to play again or Exit")
+        check.configure(state="disabled")
+        clear.configure(state="disabled")        
+
+    def resetexit_pgm(p2):
+        for w4 in widgets_wordle:
+            try:
+                w4.grid_forget()
+            except:
+                pass
+
+        if p2 == user_panel:
+            try:
+                temp_username = current_data[0]
+            except:
+                menu()
+            else:
+                p2()
+        else:
+            p2()
+
+    for y in range(6):
+        for x in range(5):
+            entry = Entry(root, width=2, justify="center")
+            entry.grid(row=y, column=x, pady=4, padx=2)
+            entry.configure(state="readonly", readonlybackground="#383838", font="36", bg="#383838",
+             fg="#E8E8E8", relief="flat")
+            entries.append(entry)
+
+    steps = Label(root, text="Click on Start", bg="black", fg="#E90000")
+    steps.grid(row=1, column=5)
+
+    check = Button(root, text="Check", bg="#00CE20", width=10, command=guessing_pgm)
+
+    start = Button(root, text="Start", bg="#00CE20", width=10, command=start_pgm)
+    start.grid(row=2, column=5, pady=0, padx=2)
+
+    clear = Button(root, text="Clear", bg="#99f0ff", width=10, command = clear_entry)
+    clear.grid(row=3, column = 5)
+
+    reset = Button(root, text="Restart",bg="#FF9517", width=10, command=lambda: resetexit_pgm(wordle_pgm))
+    reset.grid(row=4, column=5, pady=0, padx=2)
+
+    exit = Button(root, text="Exit", bg="#E90000", width=10, command=lambda: resetexit_pgm(user_panel))
+    exit.grid(row=5, column=5, pady=0, padx=2)
+
+    info = Button(root, text="Information", bg="#1f80ff", width=10, command=info_pgm)
+    info.grid(row=0, column=5, pady=0, padx=2)
+
+    widgets_wordle = [exit, reset, steps, clear, info, start, check]
+    widgets_wordle.extend(entries)
+
+play_button = Button(root, text="Wordle", bg="#AED6F1", command=wordle_pgm)
+stats_button = Button(root, text="Statistics", bg="#5DADE2", command=stats_pgm)
+leaderboard_button = Button(root, text="Leaderboard", bg="#2E86C1", command=leaderboard_pgm)
+login_button = Button(root, text="Login", bg="#A3E4D7", command=login_pgm)
+signup_button = Button(root, text="Sign up", bg="#48C9B0", command=signup_pgm)
+guest_button = Button(root, text="Use Guest Mode", bg="#17A589", command=guest_pgm)
+
+menu()
+root.mainloop()
